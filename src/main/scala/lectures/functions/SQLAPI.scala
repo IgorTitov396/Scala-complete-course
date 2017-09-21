@@ -1,5 +1,7 @@
 package lectures.functions
 
+import com.sun.javafx.util.Logging
+
 /**
   * Представим себе, как бы мог выглядеть API для работы, например, с БД
   * Строить методы этого API будем через композицию уже определенных методов.
@@ -37,11 +39,20 @@ class SQLAPI(resource: String) {
 
   }
 
-  private def logParameter[T](prm: T): T  = ???
+  private def logParameter[T](prm: T): T = {
+    //Logging.getAccessibilityLogger().info(s"Logging $prm")
+    println(prm)
+    prm
+  }
 
   val connection = (resource: String) => Connection(resource)
 
-  def execute(sql: String): String = ??? // use resource from constructor
+  def execute(sql: String): String = {
+    val buf = connection(logParameter(resource)).open
+    openConnection(buf)
+    logParameter(sql)
+    buf.execute(sql)
+  }// use resource from constructor
 
 
   def openConnection(connection: Connection): (String) => String =
