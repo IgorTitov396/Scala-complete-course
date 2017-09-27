@@ -1,5 +1,6 @@
 package lectures.functions
 
+import akka.stream.impl.Compose
 import com.sun.javafx.util.Logging
 
 /**
@@ -40,14 +41,13 @@ class SQLAPI(resource: String) {
   }
 
   private def logParameter[T](prm: T): T = {
-    //Logging.getAccessibilityLogger().info(s"Logging $prm")
     println(prm)
     prm
   }
 
   val connection = (resource: String) => Connection(resource)
 
-  def execute(sql: String): String = openConnection(connection(logParameter(resource)).open).compose[String](connection(resource).open.execute _)(logParameter(sql))
+  def execute(sql: String): String = ((openConnection((connection compose logParameter[String])(resource).open()) compose logParameter[String]) andThen logParameter[String])(sql)
   
   def openConnection(connection: Connection): (String) => String =
     (sql: String) => {

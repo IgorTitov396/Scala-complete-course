@@ -38,7 +38,7 @@ object Fibonacci2 extends App {
     else fibsImpl(num, Array(1, 1, 2))(num - 1)
 
   private def fibsImpl(num: Int, acc: Array[Int]): Array[Int] = {
-    if (acc.length == num) acc else fibsImpl(num, acc ++ Array(acc.last + acc(acc.length - 2)))
+    if (acc.length < num) fibsImpl(num, acc ++ Array(acc(acc.length - 1) + acc(acc.length - 2))) else acc
   }
 
   println(fibs2(16))
