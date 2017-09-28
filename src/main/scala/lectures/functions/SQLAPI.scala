@@ -1,5 +1,8 @@
 package lectures.functions
 
+import akka.stream.impl.Compose
+import com.sun.javafx.util.Logging
+
 /**
   * Представим себе, как бы мог выглядеть API для работы, например, с БД
   * Строить методы этого API будем через композицию уже определенных методов.
@@ -37,17 +40,19 @@ class SQLAPI(resource: String) {
 
   }
 
-  private def logParameter[T](prm: T): T  = ???
+  private def logParameter[T](prm: T): T = {
+    println(prm)
+    prm
+  }
 
   val connection = (resource: String) => Connection(resource)
 
-  def execute(sql: String): String = ??? // use resource from constructor
-
+  def execute(sql: String) = ((((logParameter[String] _) andThen (Connection.apply(_: String).open)) andThen (openConnection(_: Connection) compose logParameter[String] _))(_: String) andThen logParameter[String] _)(resource)(sql)
 
   def openConnection(connection: Connection): (String) => String =
     (sql: String) => {
       connection.open execute sql
-  }
+    }
 
 }
 
@@ -56,3 +61,4 @@ object SQLCheck extends App {
   new SQLAPI("some DB").execute("some SQL")
 
 }
+
