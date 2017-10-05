@@ -13,8 +13,9 @@ object Fibonacci extends App {
 
   // Task 2
   def fibs(num: Int): Int = {
-    if (num == 1 || num == 2) 1 else
-    fibs(num - 1) + fibs(num - 2)
+    if (num < 0) throw new RuntimeException("Fibonacci number not found")
+    if (num == 0) 0
+    else if (num == 1 || num == 2) 1 else fibs(num - 1) + fibs(num - 2)
   }
 
   println(fibs(9))
@@ -33,9 +34,12 @@ object Fibonacci extends App {
   */
 object Fibonacci2 extends App {
 
-  def fibs2(num: Int) =
-    if (num <= 3) Array(1, 1, 2)(num - 1)
+  def fibs2(num: Int) = {
+    if (num < 0) throw new RuntimeException("Fibonacci number not found")
+    if (num == 0) 0
+    else if (num <= 3 && num > 1) Array(1, 1, 2)(num - 1)
     else fibsImpl(num, Array(1, 1, 2))(num - 1)
+  }
 
   private def fibsImpl(num: Int, acc: Array[Int]): Array[Int] = {
     if (acc.length < num) fibsImpl(num, acc ++ Array(acc(acc.length - 1) + acc(acc.length - 2))) else acc
