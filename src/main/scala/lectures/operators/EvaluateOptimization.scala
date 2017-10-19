@@ -60,4 +60,3 @@ object EvaluateOptimization extends App with Data {
 
   println(s"Difference is about $diff milliseconds")
 }
-
