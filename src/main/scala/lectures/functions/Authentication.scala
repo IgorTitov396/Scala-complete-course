@@ -1,6 +1,6 @@
 package lectures.functions
 
-import scala.util.Random
+import scala.util.Try
 
 /**
   * Эта задача имитирует авторизацию в интернет банке.
@@ -32,16 +32,14 @@ object Authentication extends App {
 
   val authByCard: PartialFunction[User, Boolean] = {
     case CardUser(id, credentials) => AuthenticationData.registeredCards.map(_.cardNumber).contains(credentials.cardNumber)
-    case _ => false
   }
 
   val authByLP: PartialFunction[User, Boolean] = {
     case LPUser(id, credentials) => AuthenticationData.registeredLoginAndPassword.contains(credentials)
-    case _ => false
   }
 
   val authenticated: List[Option[User]] = for (user <- testUsers) yield {
-    if (authByLP(user) || authByCard(user)) Some(user) else None
+    if (Try(authByLP(user)).getOrElse(false) || Try(authByCard(user)).getOrElse(false)) Some(user) else None
   }
 
   authenticated.flatten foreach println

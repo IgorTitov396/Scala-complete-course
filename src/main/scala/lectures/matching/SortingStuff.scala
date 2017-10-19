@@ -78,7 +78,7 @@ object SortingStuff extends App {
        case item::rest =>
          val newBox = putStuffInRightBox(item, stuffBox)
          sort(rest, newBox)
-     }
+}
     // Метод должен положить вещь в правильную коробку
     private def putStuffInRightBox(item: Stuff, stuffBox: StuffBox): StuffBox = item match {
       case it: Book => stuffBox.copy(books = it :: stuffBox.books)

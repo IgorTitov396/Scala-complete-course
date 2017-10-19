@@ -28,19 +28,16 @@ object MyListImpl extends App {
 
     def foldLeft(acc: Int)(f: ((Int, Int)) => Int): Int = data match {
       case list if (list == Nil) => acc
-      case List(value) => f((acc, value))
-      case head::tail => MyList(tail).foldLeft(acc + head)(f)
+      case head :: tail => MyList(tail).foldLeft(f(acc, head))(f)
     }
 
-    def filter(f: Int => Boolean) = flatMap{ PartialFunction[Int, List[Int]] {
-        case value if f(value) => List(value)
-        case _ => List()
-      } andThen MyList
+    def filter(f: Int => Boolean) = flatMap {
+      ((value: Int) => if (f(value)) List(value) else List()) andThen MyList
     }
-  }
 
     require(MyList(List(1, 2, 3, 4, 5, 6)).map(_ * 2).data == List(2, 4, 6, 8, 10, 12))
     require(MyList(List(1, 2, 3, 4, 5, 6)).filter(_ % 2 == 0).data == List(2, 4, 6))
     require(MyList(List(1, 2, 3, 4, 5, 6)).foldLeft(0)((tpl) => tpl._1 + tpl._2) == 21)
     require(MyList(Nil).foldLeft(0)((tpl) => tpl._1 + tpl._2) == 0)
+  }
 }

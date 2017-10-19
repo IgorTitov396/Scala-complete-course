@@ -74,7 +74,7 @@ object OptionVsNPE extends App {
   } catch {
     case e: ResourceException => {
       println("Try again with new resource")
-      throw new ResourceException
+      businessLogic
     }
   }
   businessLogic
