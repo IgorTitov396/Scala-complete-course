@@ -27,7 +27,7 @@ object MyListImpl extends App {
     def map(f: (Int => Int)) = flatMap(f andThen (List(_)) andThen MyList)
 
     def foldLeft(acc: Int)(f: ((Int, Int)) => Int): Int = data match {
-      case list if (list == Nil) => acc
+      case Nil => acc
       case head :: tail => MyList(tail).foldLeft(f(acc, head))(f)
     }
 
