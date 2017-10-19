@@ -22,23 +22,22 @@ package lectures.operators
   * Для решения задачи раскомментируйте тело объекта Competition
   */
 
-object Competition extends App {
+object Competition {
 
   val locals = Map("Artem" -> 6, "Sergey" -> 5, "Anton" -> 2, "Vladimir" -> "2", "Alexander" -> 4l)
   val foreigners = Map[String, Int]("John" -> 3, "James" -> 1, "Tom" -> 2, "Dick" -> 5, "Eric" -> 6)
 
-  //  val results = for (l <- locals;
-  //                     ???) {
-  //    val localName = l._1
-  //    val localValue = l._2
-  //    ???
-  //  }
+  val results = for (l <- locals.toArray; f <- foreigners) yield l._1 + " vs " + f._1 -> (l._2.toString.toInt - f._2)
 
-  //  var finalResult = 0
-  //  for (r <- results) {
-  //    if (???) finalResult = finalResult + 1
-  //    else ???
-  //  }
+  var finalResult = 0
+  for (r <- results) {
+    if (r._2 > 0) finalResult = finalResult + 1
+    else if (r._2 < 0) finalResult -= 1
+  }
 
-  print("Победила дружба")
+  finalResult match {
+    case a if a > 0 => println("Наша взяла")
+    case a if a < 0 => println("Продули")
+    case _ => println("Победила дружба")
+  }
 }
