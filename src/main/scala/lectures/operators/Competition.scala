@@ -39,7 +39,7 @@ object Competition {
 
   var finalResult = 0
   for (r <- results) {
-    if (r._2 > 0) finalResult = finalResult + 1
+    if (r._2 > 0) finalResult += 1
     else if (r._2 < 0) finalResult -= 1
   }
 

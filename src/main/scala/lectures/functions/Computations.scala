@@ -53,7 +53,7 @@ object CurriedComputation extends Data {
     dataProducer.filter(dataItem => filterArray.contains(dataItem))
   }
 
-  def curriedComputation(filterData: String)(dataProducer: Array[String]): Array[String] = computation(filterData, dataProducer)
+  def curriedComputation(filterData: String)(dataProducer: Array[String]) = (computation _ curried)(filterData)(dataProducer)
 
   val partiallyAppliedCurriedFunction = curriedComputation(filterData) _
 

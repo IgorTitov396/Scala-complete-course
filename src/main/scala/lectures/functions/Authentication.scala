@@ -39,7 +39,7 @@ object Authentication extends App {
   }
 
   val authenticated: List[Option[User]] = for (user <- testUsers) yield {
-    if (Try(authByLP(user)).getOrElse(false) || Try(authByCard(user)).getOrElse(false)) Some(user) else None
+    if (Try((authByCard orElse authByCard)(user)).getOrElse(false)) Some(user) else None
   }
 
   authenticated.flatten foreach println

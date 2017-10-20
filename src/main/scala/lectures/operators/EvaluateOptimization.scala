@@ -13,9 +13,10 @@ import lectures.functions.{Computation, CurriedComputation, Data, FunctionalComp
   *   * в классах CurriedComputation и FunctionalComputation уберите extends App, оставьте extends Data
   *   * раскомментируйте код, выполните в циклах вызов 3-х имплементаций,
   *   * оцените разницу во времени выполнения и объясните ее происхожение
-  *   Разница возникает из-за того, что при каррировании создаётся новая сущность, независимая от объекта, в котором
-  *   определена, а в функциональном случае мы не создаём новую функцию, а сообщаем компилятору в какой
-  *   последовательности выполнять функции, объединением которых является функция Computations
+  *   Разница возникает из-за того, что в одном случае считается полностью функция, а в другом функция разбивается на 2 и
+  *   значение первой из них вычисляется 1 раз, а потом передаётся во вторую как параметр. Тем самым требуется меньше
+  *   времени на вычисление фунции в целом.
+  *
   *
   */
 object EvaluateOptimization extends App with Data {
@@ -23,7 +24,7 @@ object EvaluateOptimization extends App with Data {
   val computationStartTimestamp = System.currentTimeMillis()
 
   // ВЫПОЛНИТЬ В ЦИКЛЕ ОТ 1 ДО 100 Computation.computation
-  for (i <- 1 to 100) {
+  for (i <- 1 to 10) {
     Computation.result
   }
 
@@ -34,7 +35,7 @@ object EvaluateOptimization extends App with Data {
   val partiallyAppliedStartTimestamp = System.currentTimeMillis()
 
   // ВЫПОЛНИТЬ В ЦИКЛЕ ОТ 1 ДО 100 CurriedComputation.partiallyAppliedCurriedFunction
-  for (i <- 1 to 100) {
+  for (i <- 1 to 10) {
     CurriedComputation.result
   }
 
@@ -46,7 +47,7 @@ object EvaluateOptimization extends App with Data {
   val filterAppliedStartTimestamp = System.currentTimeMillis()
 
   // ВЫПОЛНИТЬ В ЦИКЛЕ ОТ 1 ДО 100 FunctionalComputation.filterApplied
-  for (1 <- 1 to 100) {
+  for (i <- 1 to 10) {
     FunctionalComputation.result
   }
 
