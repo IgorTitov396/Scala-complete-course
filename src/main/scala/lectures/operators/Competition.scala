@@ -24,18 +24,13 @@ import scala.util.Try
   * Для решения задачи раскомментируйте тело объекта Competition
   */
 
-object Competition {
+object Competition extends App {
 
-  val locals = Map("Artem" -> 6, "Sergey" -> 5, "Anton" -> 2, "Vladimir" -> "2", "Alexander" -> 4l)
+  val locals = Map[String, Int]("Artem" -> 6, "Sergey" -> 5, "Anton" -> 2, "Vladimir" -> 2, "Alexander" -> 4)
   val foreigners = Map[String, Int]("John" -> 3, "James" -> 1, "Tom" -> 2, "Dick" -> 5, "Eric" -> 6)
 
-  val results = for (l <- locals.toArray.map(pair => (pair._1, toInt(pair._2))); f <- foreigners) yield l._1 + " vs " + f._1 -> (l._2 - f._2)
+  val results = for (l <- locals; f <- foreigners) yield l._1 + " vs " + f._1 -> (l._2 - f._2)
 
-  def toInt(x: Any) = x match {
-    case value: Int => value
-    case value: Long => value.toInt
-    case value: String => value.toInt
-  }
 
   var finalResult = 0
   for (r <- results) {
