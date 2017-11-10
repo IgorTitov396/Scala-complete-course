@@ -1,5 +1,7 @@
 package lectures.operators
 
+import scala.util.Try
+
 /**
   * Проходит чемпионат по спортивному киданю костей)
   * Сражаются "Наши" и "Приезжие"
@@ -24,21 +26,21 @@ package lectures.operators
 
 object Competition extends App {
 
-  val locals = Map("Artem" -> 6, "Sergey" -> 5, "Anton" -> 2, "Vladimir" -> "2", "Alexander" -> 4l)
+  val locals = Map[String, Int]("Artem" -> 6, "Sergey" -> 5, "Anton" -> 2, "Vladimir" -> 2, "Alexander" -> 4)
   val foreigners = Map[String, Int]("John" -> 3, "James" -> 1, "Tom" -> 2, "Dick" -> 5, "Eric" -> 6)
 
-  //  val results = for (l <- locals;
-  //                     ???) {
-  //    val localName = l._1
-  //    val localValue = l._2
-  //    ???
-  //  }
+  val results = for (l <- locals; f <- foreigners) yield l._1 + " vs " + f._1 -> (l._2 - f._2)
 
-  //  var finalResult = 0
-  //  for (r <- results) {
-  //    if (???) finalResult = finalResult + 1
-  //    else ???
-  //  }
 
-  print("Победила дружба")
+  var finalResult = 0
+  for (r <- results) {
+    if (r._2 > 0) finalResult = finalResult + 1
+    else if (r._2 < 0) finalResult -= 1
+  }
+
+  finalResult match {
+    case a if a > 0 => println("Наша взяла")
+    case a if a < 0 => println("Продули")
+    case _ => println("Победила дружба")
+  }
 }
