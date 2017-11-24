@@ -11,7 +11,6 @@ package lectures.functions
   */
 object Fibonacci extends App {
 
-  // Task 2
   def fibs(num: Int): Int = {
     if (num < 0) throw new RuntimeException("Fibonacci number not found")
     else if (num == 0) 0
