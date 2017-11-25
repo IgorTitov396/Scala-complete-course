@@ -71,14 +71,12 @@ object SortingStuff extends App {
    // Замените знаки вопроса подходящим кодом
    // Поправьте логику метода
    private def sort(stuff: List[Stuff], stuffBox: StuffBox): StuffBox = stuff match {
-       case List(item: Watches) if item.cost > 1000 => putStuffInRightBox(item, stuffBox)
-       case List(item: Boots) if item.brand == "Converse" || item.brand == "Adidas" => putStuffInRightBox(item, stuffBox)
-       case List(item: Book) if item.isInteresting => putStuffInRightBox(item, stuffBox)
-       case List(item: Stuff) => putStuffInRightBox(item, stuffBox)
-       case item::rest =>
-         val newBox = putStuffInRightBox(item, stuffBox)
-         sort(rest, newBox)
-}
+     case Nil => stuffBox
+     case (head : Watches) :: tail if head.cost > 1000 => sort(tail, putStuffInRightBox(head, stuffBox))
+     case (head : Boots) :: tail if head.brand == "Converse" || head.brand == "Adidas" => sort(tail, putStuffInRightBox(head, stuffBox))
+     case (head : Book) :: tail if head.isInteresting => sort(tail, putStuffInRightBox(head, stuffBox))
+     case junk :: tail => sort(tail, stuffBox.copy(junk = junk :: stuffBox.junk))
+   }
     // Метод должен положить вещь в правильную коробку
     private def putStuffInRightBox(item: Stuff, stuffBox: StuffBox): StuffBox = item match {
       case it: Book => stuffBox.copy(books = it :: stuffBox.books)
