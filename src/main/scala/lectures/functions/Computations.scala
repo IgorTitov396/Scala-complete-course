@@ -39,9 +39,21 @@ object Computation extends App with Data {
   *
   * Какой тип имеет partiallyAppliedCurriedFunction - (Array[String]) => Array[String]
   */
-object CurriedComputation extends App with Data {
+object CurriedComputation extends Data {
 
-  def curriedComputation(filterData: String)(dataProducer: Array[String]): Array[String] = Computation.computation(filterData, dataProducer)
+  def computation(filterData: String, dataProducer: Array[String]): Array[String] = {
+    //EMULATE HEAVY LOAD
+    Thread.sleep(10)
+    //PRODUCE WORDS ARRAY FROM A STRING
+    val filterArray = filterData.split(" ")
+
+    //EMULATE HEAVY LOAD
+    Thread.sleep(100)
+    // LEAVE ONLY EQUAL WORDS IN BOTH ARRAYS
+    dataProducer.filter(dataItem => filterArray.contains(dataItem))
+  }
+
+  def curriedComputation(filterData: String)(dataProducer: Array[String]) = (computation _ curried)(filterData)(dataProducer)
 
   val partiallyAppliedCurriedFunction = curriedComputation(filterData) _
 
@@ -54,9 +66,21 @@ object CurriedComputation extends App with Data {
   *
   * При этом постарайтесь минимизировать количество разбиений строки filterData на отдельные слова.
   */
-object FunctionalComputation extends App with Data {
+object FunctionalComputation extends Data {
 
-  def functionalComputation(filterData: String): (Array[String]) => Array[String] = Computation.computation _ curried filterData
+  def computation(filterData: String, dataProducer: Array[String]): Array[String] = {
+    //EMULATE HEAVY LOAD
+    Thread.sleep(10)
+    //PRODUCE WORDS ARRAY FROM A STRING
+    val filterArray = filterData.split(" ")
+
+    //EMULATE HEAVY LOAD
+    Thread.sleep(100)
+    // LEAVE ONLY EQUAL WORDS IN BOTH ARRAYS
+    dataProducer.filter(dataItem => filterArray.contains(dataItem))
+  }
+
+  def functionalComputation(filterData: String): (Array[String]) => Array[String] = computation(filterData, _)
 
   val filterApplied = functionalComputation(filterData)
 
