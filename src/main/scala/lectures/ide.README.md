@@ -1,5 +1,5 @@
 # 1. Горячие клавишы:
-1. `alt + ctrl + \` ` - создать package
+1. `alt + ctrl + \`` - создать package
 2. `alt + ctrl + 1` - создать scala sheet файл
 3. `alt + ctrl + 2` - создать scala class
 4. `alt + ctrl + 3` - создать файл
