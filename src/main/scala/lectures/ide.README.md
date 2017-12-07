@@ -11,11 +11,11 @@
 10. `alt + ctrl + shift + F10` - debug класс, на котором курсор
 
 # 2. Шаблоны быстрой подстановки:
-### 1. Create `Case Class`:
+### 1. Create *Case Class*:
 `case class $NAME$($ARGS$)$END$`
-### 2. Create `File Reader`:
+### 2. Create *File Reader*:
 `val $NAME$ = scala.io.Source.fromFile("$PATH$")$END$`
-### 3. Create `Print Writer`:
+### 3. Create *Print Writer*:
 `val $NAME$ = new java.io.PrintWriter(new java.io.File("$FILE_NAME$"))$END$`
 
 
