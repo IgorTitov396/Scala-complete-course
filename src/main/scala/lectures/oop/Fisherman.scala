@@ -29,8 +29,8 @@ trait PartY {
   def str = "Y"
 }
 
-trait PartCH extends PartD {
-  override def str = super.str + "CH"
+trait PartCH {
+  def str = "CH"
 }
 
 trait PartK extends PartCH {
@@ -38,13 +38,12 @@ trait PartK extends PartCH {
 }
 
 trait PartA extends PartK {
-  override def str = super.str + "A"
+  override def str = super[PartK].str + "A"
 }
 
-class PartO extends PartA {
+class PartO extends PartA with PartD {
   override def str = {
-    val (start, finish) = super.str.splitAt(2)
-    start + "O" + finish
+    super[PartD].str + "O" + super[PartA].str
   }
 }
 
