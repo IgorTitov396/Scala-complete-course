@@ -21,16 +21,16 @@ package lectures.oop
   * * * * так можно: PartD { def str = { val newStr = doSomethingWithD("D"); newStr }}
   * * * * содержимое FishermansApp менять нельзя
   **/
-object PartD {
-  def str = "D"
+trait PartD extends PartY {
+  override def str = super.str + "D"
 }
 
-object PartY {
+trait PartY {
   def str = "Y"
 }
 
-trait PartCH extends {
-  def str = "CH"
+trait PartCH extends PartD {
+  override def str = super.str + "CH"
 }
 
 trait PartK extends PartCH {
@@ -42,12 +42,14 @@ trait PartA extends PartK {
 }
 
 class PartO extends PartA {
-  override def str = PartY.str + PartD.str + "O" + super.str
+  override def str = {
+    val (start, finish) = super.str.splitAt(2)
+    start + "O" + finish
+  }
 }
 
 object FishermansApp extends App {
   val o = new PartO
   println(o.str)
 }
-
 
