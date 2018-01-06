@@ -109,6 +109,5 @@ git add .gitignore && git commit -m 'Added gitignore'
 И тут вы понимаете, что сделали большую ошибку, закоммитив в репозиторий файл, который там быть не должен. Как вы можете убрать его из последующих коммитов в репозитории, но оставить в рабочей копии (чтобы git его игнорировал)?
 
 ```
-Write your solution here
+git filter-branch --tree-filter "rm -f .hidden" HEAD
 ```
-
