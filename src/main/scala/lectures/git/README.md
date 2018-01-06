@@ -57,6 +57,7 @@ git commit -m 'Commited fileA.txt'
 
 ```
 git rebase -i HEAD~2
+
 В открывшемся текстовом редакторе пишу:
     ```
     pick 2c2ee2f Commited fileA.txt
@@ -81,7 +82,17 @@ git add fileA.txt && git commit -m 'Commited Bivaliy'
 Тут вы понимаете, что незачем разбивать эту знаменитую троицу на три разных коммита, да и длинная история вам ни к чему. Поэтому надо их всех соединить в один коммит с комментарием `Samogonshiki`. Ваши действия:
 
 ```
-Write your solution here
+git rebase -i HEAD~3
+
+В открывшемся текстовом редакторе пишу:
+    ```
+    pick 2f79d8d Commited Trus
+    squash 3bda62d Commited Balbes
+    squash e5ba2cd Commited Bivaliy
+    ```
+Сохраняю и выхожу из него.
+
+git commit --amend -m "Samogonshiki"
 ```
 
 ### 5. Финальный босс
