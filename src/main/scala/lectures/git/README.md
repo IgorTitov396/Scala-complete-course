@@ -13,7 +13,7 @@ git commit -m 'Very impotant commit'
 Перечитав комментарий, вы вдруг обнаруживаете опечатку в слове `important`. Напишите внизу команду, которая исправит это досадное недоразумение:
 
 ```
-Write your solution here
+git commit --amend -m "Very important commit"
 ```
 
 ### 2. Восстанавливаем наглядность
