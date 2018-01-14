@@ -40,17 +40,33 @@ case class BSTImpl(value: Int,
 
   def add(newValue: Int): BST = {
     if (newValue < value) {
-      if (left.isDefined) this.copy(left = Option(left.get.add(newValue).asInstanceOf[BSTImpl])) else this.copy(left = Option(BSTImpl(newValue)))
+      left.map( bst_left =>
+        this.copy(
+          left = Some(bst_left.add(newValue).asInstanceOf[BSTImpl])
+        )
+      ).getOrElse(
+        this.copy(
+          left = Some(BSTImpl(newValue))
+        )
+      )
     }
     else {
-      if (right.isDefined) this.copy(right = Option(right.get.add(newValue).asInstanceOf[BSTImpl])) else this.copy(right = Option(BSTImpl(newValue)))
+      right.map( bst_right =>
+        this.copy(
+          right = Some(bst_right.add(newValue).asInstanceOf[BSTImpl])
+        )
+      ).getOrElse(
+        this.copy(
+          right = Some(BSTImpl(newValue))
+        )
+      )
     }
   }
 
   def find(value: Int): Option[BST] = {
-    if (value == this.value) Option(this)
-    else if (value > this.value) right
-    else left
+    if (value == this.value) Some(this)
+    else if (value > this.value) right.flatMap(_.find(value))
+    else left.flatMap(_.find(value))
   }
 
   override def toString: String = {
@@ -143,9 +159,9 @@ object TreeTest extends App {
   val testTree = tree.add(markerItem).add(markerItem2).add(markerItem3)
 
   // check that search is correct
-  require(testTree.find(markerItem).isDefined)
-  require(testTree.find(markerItem).isDefined)
-  require(testTree.find(markerItem).isDefined)
+  require(testTree.find(markerItem).map(_.value).contains(markerItem))
+  require(testTree.find(markerItem2).map(_.value).contains(markerItem2))
+  require(testTree.find(markerItem3).map(_.value).contains(markerItem3))
 
   println(testTree)
 }
