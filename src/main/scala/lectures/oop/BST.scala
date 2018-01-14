@@ -38,7 +38,7 @@ case class BSTImpl(value: Int,
                    left: Option[BSTImpl] = None,
                    right: Option[BSTImpl] = None) extends BST {
 
-  def add(newValue: Int): BST = {
+  override def add(newValue: Int): BST = {
     if (newValue < value) {
       left.fold(
         this.copy(
@@ -63,69 +63,71 @@ case class BSTImpl(value: Int,
     }
   }
 
-  def find(value: Int): Option[BST] = {
+  override def find(value: Int): Option[BST] = {
     if (value == this.value) Some(this)
     else if (value > this.value) right.flatMap(_.find(value))
     else left.flatMap(_.find(value))
   }
 
   override def toString: String = {
-    implicit class MyRichString(str: String) {
-      def getHeight: Int = str.split('\n').length
-
-      def getWidth: Int = {
-        val index = str.indexOf('\n')
-        if (index == -1) str.length
-        else index
-      }
-
-      def normalizeStringSize(maxLengthOfValue: Int): String = {
-        val diffOfMaxAndCurrentString = maxLengthOfValue - str.length
-        if (diffOfMaxAndCurrentString % 2 == 0) " " * (diffOfMaxAndCurrentString / 2) + str + " " * (diffOfMaxAndCurrentString / 2)
-        else " " + " " * (diffOfMaxAndCurrentString / 2) + str + " " * (diffOfMaxAndCurrentString / 2)
-      }
-
-      def normalizeWidth(width: Int): String = str.split("\n").map(_.normalizeStringSize(width)).mkString("\n")
-      def normalizeHeight(height: Int): String = str + Seq.fill[String](height - str.getHeight)("\n" + " " * str.getWidth).mkString("")
-
-      def normalizeHeightAndWidth(height: Int, width: Int): String = {
-        str.normalizeWidth(width).normalizeHeight(height)
-      }
-
-    }
-
-    val lengthOfSeparator: Int = 2
-
-    def getNewWidth(leftStr: String, rightStr: String, topStr: String): Int = {
-      val maxWidthOfChildes = Math.max(rightStr.getWidth, leftStr.getWidth)
-
-      val newWidth = Math.max(2 * maxWidthOfChildes + lengthOfSeparator, topStr.getWidth)
-      if (newWidth % 2 == 0) newWidth
-      else newWidth + 1
-    }
-
-    def getNewChildesHeight(leftStr: String, rightStr: String): Int = Math.max(leftStr.getHeight, rightStr.getHeight)
-
-    def mergeLeftRightTop(leftStr: String, rightStr: String, topStr: String, newChildesHeight: Int, width: Int) = {
-      val childWidth = (width - lengthOfSeparator) / 2
-      val normalizedLeft = leftStr.normalizeHeightAndWidth(newChildesHeight, childWidth)
-      val normalizedRight = rightStr.normalizeHeightAndWidth(newChildesHeight, childWidth)
-      val normalizedTopStr = topStr.normalizeStringSize(width)
-      val mergedLeftAndRightStrs =
-        normalizedLeft.split("\n").zip(normalizedRight.split("\n"))
-          .map(pair => pair._1 + " " * lengthOfSeparator + pair._2).mkString("\n")
-      normalizedTopStr + "\n" + mergedLeftAndRightStrs
-    }
-
     val leftToString = left.fold("")(_.toString)
     val rightToString = right.fold("")(_.toString)
     val currentValueToString = value.toString
 
-    val newChildesHeight = getNewChildesHeight(leftToString, rightToString)
+    val newChildesHeight = getNewHeightOfChildes(leftToString, rightToString)
 
     val newWidth = getNewWidth(leftToString, rightToString, currentValueToString)
 
     mergeLeftRightTop(leftToString, rightToString, currentValueToString, newChildesHeight, newWidth)
+  }
+
+  //private
+
+  private val lengthOfSeparator: Int = 2
+
+  private def getNewWidth(leftStr: String, rightStr: String, topStr: String): Int = {
+    val maxWidthOfChildes = Math.max(rightStr.getWidth, leftStr.getWidth)
+
+    val newWidth = Math.max(2 * maxWidthOfChildes + lengthOfSeparator, topStr.getWidth)
+    if (newWidth % 2 == 0) newWidth
+    else newWidth + 1
+  }
+
+  private def getNewHeightOfChildes(leftStr: String, rightStr: String): Int = Math.max(leftStr.getHeight, rightStr.getHeight)
+
+  private def mergeLeftRightTop(leftStr: String, rightStr: String, topStr: String, newChildesHeight: Int, width: Int) = {
+    val childWidth = (width - lengthOfSeparator) / 2
+    val normalizedLeft = leftStr.normalizeHeightAndWidth(newChildesHeight, childWidth)
+    val normalizedRight = rightStr.normalizeHeightAndWidth(newChildesHeight, childWidth)
+    val normalizedTopStr = topStr.normalizeStringSize(width)
+    val mergedLeftAndRightStrs =
+      normalizedLeft.split("\n").zip(normalizedRight.split("\n"))
+        .map(pair => pair._1 + " " * lengthOfSeparator + pair._2).mkString("\n")
+    normalizedTopStr + "\n" + mergedLeftAndRightStrs
+  }
+
+  private implicit class MyRichString(str: String) {
+    def normalizeStringSize(maxLengthOfValue: Int): String = {
+      val diffOfMaxAndCurrentString = maxLengthOfValue - str.length
+      if (diffOfMaxAndCurrentString % 2 == 0) " " * (diffOfMaxAndCurrentString / 2) + str + " " * (diffOfMaxAndCurrentString / 2)
+      else " " + " " * (diffOfMaxAndCurrentString / 2) + str + " " * (diffOfMaxAndCurrentString / 2)
+    }
+
+    def getHeight: Int = str.split('\n').length
+
+    def getWidth: Int = {
+      val index = str.indexOf('\n')
+      if (index == -1) str.length
+      else index
+    }
+
+    def normalizeWidth(width: Int): String = str.split("\n").map(_.normalizeStringSize(width)).mkString("\n")
+
+    def normalizeHeight(height: Int): String = str + Seq.fill[String](height - str.getHeight)("\n" + " " * str.getWidth).mkString("")
+
+    def normalizeHeightAndWidth(height: Int, width: Int): String = {
+      str.normalizeWidth(width).normalizeHeight(height)
+    }
   }
 }
 
