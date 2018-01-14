@@ -1,6 +1,7 @@
 package lectures.eval
 
 import java.time.Clock
+import java.time.temporal.ChronoUnit
 
 import scala.collection.SeqView
 
@@ -18,7 +19,7 @@ import scala.collection.SeqView
 object LazySchedulerView {
 
   implicit class SeqViewConverter[A](f: Seq[A]) {
-    val c = Clock.systemDefaultZone()
+    val c: Clock = Clock.systemDefaultZone()
 
     /**
       *
@@ -27,7 +28,8 @@ object LazySchedulerView {
       */
     def lazySchedule(expirationTimeout: Long): SeqView[A, Seq[_]]  = {
       val i = c.instant().plusMillis(expirationTimeout)
-      ???
+      def timeLeft = Clock.systemDefaultZone().instant().until(i, ChronoUnit.MILLIS)
+      f.view.filter(_ => timeLeft > 0).take(f.size)
     }
   }
 }
