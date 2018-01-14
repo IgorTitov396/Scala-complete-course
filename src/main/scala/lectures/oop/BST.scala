@@ -40,24 +40,24 @@ case class BSTImpl(value: Int,
 
   def add(newValue: Int): BST = {
     if (newValue < value) {
-      left.map( bst_left =>
-        this.copy(
-          left = Some(bst_left.add(newValue).asInstanceOf[BSTImpl])
-        )
-      ).getOrElse(
+      left.fold(
         this.copy(
           left = Some(BSTImpl(newValue))
+        )
+      )( bst_left =>
+        this.copy(
+          left = Some(bst_left.add(newValue).asInstanceOf[BSTImpl])
         )
       )
     }
     else {
-      right.map( bst_right =>
-        this.copy(
-          right = Some(bst_right.add(newValue).asInstanceOf[BSTImpl])
-        )
-      ).getOrElse(
+      right.fold(
         this.copy(
           right = Some(BSTImpl(newValue))
+        )
+      )( bst_right =>
+        this.copy(
+          right = Some(bst_right.add(newValue).asInstanceOf[BSTImpl])
         )
       )
     }
@@ -70,69 +70,62 @@ case class BSTImpl(value: Int,
   }
 
   override def toString: String = {
-    def depthOfBSTAndMaxValue(acc: Int, bst: BST): (Int, Int) = bst match {
-      case BSTImpl(_, leftVal, rightVal) if leftVal.isDefined && rightVal.isDefined =>
-        val (leftRes, rightRes) = (depthOfBSTAndMaxValue(acc + 1, leftVal.get), depthOfBSTAndMaxValue(acc + 1, rightVal.get))
-        (math.max(leftRes._1, rightRes._1), math.max(leftRes._2, rightRes._2))
-      case BSTImpl(_, leftVal, _) if leftVal.isDefined => depthOfBSTAndMaxValue(acc + 1, leftVal.get)
-      case BSTImpl(_, _, rightVal) if rightVal.isDefined =>  depthOfBSTAndMaxValue(acc + 1, rightVal.get)
-      case _ => (acc, bst.value)
-    }
-    val (depth, maxValue) = depthOfBSTAndMaxValue(1, this)
+    implicit class MyRichString(str: String) {
+      def getHeight: Int = str.split('\n').length
 
-    val maxLength = maxValue.toString.toCharArray.length
-
-    def fromValueToStr(value: Option[Int], maxLengthOfValue: Int): String = {
-      if (value.isEmpty) " " * maxLengthOfValue
-      else {
-        val startedString = value.get.toString
-        val diffOfMaxAndCurrentString = maxLengthOfValue - startedString.length
-        if (diffOfMaxAndCurrentString % 2 == 0) " " * (diffOfMaxAndCurrentString / 2) + startedString + " " * (diffOfMaxAndCurrentString / 2)
-        else " " + " " * (diffOfMaxAndCurrentString / 2) + startedString + " " * (diffOfMaxAndCurrentString / 2)
+      def getWidth: Int = {
+        val index = str.indexOf('\n')
+        if (index == -1) str.length
+        else index
       }
-    }
 
-    def merge2Arrays(arr1: Array[Option[Int]], arr2: Array[Option[Int]]): Array[Option[Int]] = {
-      val sizeOfRes = math.min(arr1.length, arr2.length)
-      val arrRes = Array.ofDim[Option[Int]](sizeOfRes)
-      (0 until sizeOfRes).foreach(index => arrRes(index) = index match {
-        case ind if arr1(ind).isDefined => arr1(ind)
-        case ind if arr2(ind).isDefined => arr2(ind)
-        case _ => None
-      })
-      arrRes
-    }
-
-    val arrayOfTree: Array[Option[Int]] = Array[Option[Int]]((0 until math.pow(2, depth).toInt - 1).map(_ => None): _*)
-    def bstToArray(root: BST, indexOfRoot: Int, currentArray: Array[Option[Int]]): Array[Option[Int]] = root match {
-      case head if head.left.isDefined && head.right.isDefined => merge2Arrays(bstToArray(head.left.get, indexOfRoot * 2 + 1, currentArray), bstToArray(head.right.get, indexOfRoot * 2 + 2, currentArray)).patch(indexOfRoot, Array(Some(head.value)), 1)
-      case head if head.left.isDefined => bstToArray(head.left.get, indexOfRoot * 2 + 1, currentArray).patch(indexOfRoot, Array(Some(head.value)), 1)
-      case head if head.right.isDefined => bstToArray(head.right.get, indexOfRoot * 2 + 2, currentArray).patch(indexOfRoot, Array(Some(head.value)), 1)
-      case head => currentArray.patch(indexOfRoot, Array(Some(head.value)), 1)
-    }
-
-    val graphAsArray = bstToArray(this, 0, arrayOfTree)
-
-    def array2StringAsTree(array: Array[Option[Int]], depth: Int, maxLength: Int, symbolsBetweenNodes: Int): String = {
-      val list = array.toList
-      val width = math.pow(2, depth).toInt * maxLength + symbolsBetweenNodes
-
-      def matchListOfElems(list: List[Option[Int]], currentString: String = "", numOfValuesAtCurrentLevel: Int = 1, currentPos: Int = 1, lenOfStringForValue: Int = width): String = list match {
-        case Nil => currentString
-        case head :: tail =>
-          if (currentPos != numOfValuesAtCurrentLevel) {
-            matchListOfElems(tail, currentString + fromValueToStr(head, lenOfStringForValue), numOfValuesAtCurrentLevel, currentPos + 1, lenOfStringForValue)
-          }
-          else {
-            val numOfValuesAtNextLevel = numOfValuesAtCurrentLevel * 2
-            val lenOfStringForNextLevel = width / numOfValuesAtNextLevel
-            matchListOfElems(tail, currentString + fromValueToStr(head, lenOfStringForValue) + "\n", numOfValuesAtNextLevel, 1, lenOfStringForNextLevel)
-          }
+      def normalizeStringSize(maxLengthOfValue: Int): String = {
+        val diffOfMaxAndCurrentString = maxLengthOfValue - str.length
+        if (diffOfMaxAndCurrentString % 2 == 0) " " * (diffOfMaxAndCurrentString / 2) + str + " " * (diffOfMaxAndCurrentString / 2)
+        else " " + " " * (diffOfMaxAndCurrentString / 2) + str + " " * (diffOfMaxAndCurrentString / 2)
       }
-      matchListOfElems(list)
+
+      def normalizeWidth(width: Int): String = str.split("\n").map(_.normalizeStringSize(width)).mkString("\n")
+      def normalizeHeight(height: Int): String = str + Seq.fill[String](height - str.getHeight)("\n" + " " * str.getWidth).mkString("")
+
+      def normalizeHeightAndWidth(height: Int, width: Int): String = {
+        str.normalizeWidth(width).normalizeHeight(height)
+      }
+
     }
 
-    array2StringAsTree(graphAsArray, depth, maxLength, 2)
+    val lengthOfSeparator: Int = 2
+
+    def getNewWidth(leftStr: String, rightStr: String, topStr: String): Int = {
+      val maxWidthOfChildes = Math.max(rightStr.getWidth, leftStr.getWidth)
+
+      val newWidth = Math.max(2 * maxWidthOfChildes + lengthOfSeparator, topStr.getWidth)
+      if (newWidth % 2 == 0) newWidth
+      else newWidth + 1
+    }
+
+    def getNewChildesHeight(leftStr: String, rightStr: String): Int = Math.max(leftStr.getHeight, rightStr.getHeight)
+
+    def mergeLeftRightTop(leftStr: String, rightStr: String, topStr: String, newChildesHeight: Int, width: Int) = {
+      val childWidth = (width - lengthOfSeparator) / 2
+      val normalizedLeft = leftStr.normalizeHeightAndWidth(newChildesHeight, childWidth)
+      val normalizedRight = rightStr.normalizeHeightAndWidth(newChildesHeight, childWidth)
+      val normalizedTopStr = topStr.normalizeStringSize(width)
+      val mergedLeftAndRightStrs =
+        normalizedLeft.split("\n").zip(normalizedRight.split("\n"))
+          .map(pair => pair._1 + " " * lengthOfSeparator + pair._2).mkString("\n")
+      normalizedTopStr + "\n" + mergedLeftAndRightStrs
+    }
+
+    val leftToString = left.fold("")(_.toString)
+    val rightToString = right.fold("")(_.toString)
+    val currentValueToString = value.toString
+
+    val newChildesHeight = getNewChildesHeight(leftToString, rightToString)
+
+    val newWidth = getNewWidth(leftToString, rightToString, currentValueToString)
+
+    mergeLeftRightTop(leftToString, rightToString, currentValueToString, newChildesHeight, newWidth)
   }
 }
 
