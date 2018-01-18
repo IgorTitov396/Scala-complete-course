@@ -34,19 +34,48 @@ trait BST {
   def find(value: Int): Option[BST]
 }
 
+object BSTImpl {
+  implicit class MyRichString(str: String) {
+    def normalizeStringSize(maxLengthOfValue: Int): String = {
+      val diffOfMaxAndCurrentString = maxLengthOfValue - str.length
+      if (diffOfMaxAndCurrentString % 2 == 0) " " * (diffOfMaxAndCurrentString / 2) + str + " " * (diffOfMaxAndCurrentString / 2)
+      else " " + " " * (diffOfMaxAndCurrentString / 2) + str + " " * (diffOfMaxAndCurrentString / 2)
+    }
+
+    def getHeight: Int = str.split('\n').length
+
+    def getWidth: Int = {
+      val index = str.indexOf('\n')
+      if (index == -1) str.length
+      else index
+    }
+
+    def normalizeWidth(width: Int): String = str.split("\n").map(_.normalizeStringSize(width)).mkString("\n")
+
+    def normalizeHeight(height: Int): String = str + Seq.fill[String](height - str.getHeight)("\n" + " " * str.getWidth).mkString("")
+
+    def normalizeHeightAndWidth(height: Int, width: Int): String = {
+      str.normalizeWidth(width).normalizeHeight(height)
+    }
+  }
+}
+
 case class BSTImpl(value: Int,
                    left: Option[BSTImpl] = None,
                    right: Option[BSTImpl] = None) extends BST {
+  import BSTImpl._
 
-  override def add(newValue: Int): BST = {
+  override def add(newValue: Int): BST = addBSTImpl(newValue)
+
+  private def addBSTImpl(newValue: Int): BSTImpl = {
     if (newValue < value) {
       left.fold(
         this.copy(
           left = Some(BSTImpl(newValue))
         )
-      )( bst_left =>
+      )( bstLeft =>
         this.copy(
-          left = Some(bst_left.add(newValue).asInstanceOf[BSTImpl])
+          left = Some(bstLeft.addBSTImpl(newValue))
         )
       )
     }
@@ -55,9 +84,9 @@ case class BSTImpl(value: Int,
         this.copy(
           right = Some(BSTImpl(newValue))
         )
-      )( bst_right =>
+      )( bstRight =>
         this.copy(
-          right = Some(bst_right.add(newValue).asInstanceOf[BSTImpl])
+          right = Some(bstRight.addBSTImpl(newValue))
         )
       )
     }
@@ -106,29 +135,6 @@ case class BSTImpl(value: Int,
     normalizedTopStr + "\n" + mergedLeftAndRightStrs
   }
 
-  private implicit class MyRichString(str: String) {
-    def normalizeStringSize(maxLengthOfValue: Int): String = {
-      val diffOfMaxAndCurrentString = maxLengthOfValue - str.length
-      if (diffOfMaxAndCurrentString % 2 == 0) " " * (diffOfMaxAndCurrentString / 2) + str + " " * (diffOfMaxAndCurrentString / 2)
-      else " " + " " * (diffOfMaxAndCurrentString / 2) + str + " " * (diffOfMaxAndCurrentString / 2)
-    }
-
-    def getHeight: Int = str.split('\n').length
-
-    def getWidth: Int = {
-      val index = str.indexOf('\n')
-      if (index == -1) str.length
-      else index
-    }
-
-    def normalizeWidth(width: Int): String = str.split("\n").map(_.normalizeStringSize(width)).mkString("\n")
-
-    def normalizeHeight(height: Int): String = str + Seq.fill[String](height - str.getHeight)("\n" + " " * str.getWidth).mkString("")
-
-    def normalizeHeightAndWidth(height: Int, width: Int): String = {
-      str.normalizeWidth(width).normalizeHeight(height)
-    }
-  }
 }
 
 object TreeTest extends App {
