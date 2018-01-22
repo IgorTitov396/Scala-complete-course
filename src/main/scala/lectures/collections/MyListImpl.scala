@@ -1,6 +1,6 @@
 package lectures.collections
 
-import scala.util.matching.Regex.Match
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 /**
   * Представим, что по какой-то причине Вам понадобилась своя обертка над списком целых чисел List[Int]
@@ -19,25 +19,41 @@ import scala.util.matching.Regex.Match
   */
 object MyListImpl extends App {
 
-  case class MyList(data: List[Int]) {
+  class MyList[A, B <: Seq[_]](val data: Seq[A]) {
 
-    def flatMap(f: (Int => MyList)) =
-      MyList(data.flatMap(inp => f(inp).data))
+    def flatMap[T](f: (A => MyList[T, B])): MyList[T, B] =
+      MyList(data.flatMap(f(_).data))
 
-    def map(f: (Int => Int)) = flatMap(f andThen (List(_)) andThen MyList)
+    def map[T](f: (A => T)): MyList[T, B] = MyList(this.data.map(f))
 
-    def foldLeft(acc: Int)(f: ((Int, Int)) => Int): Int = data match {
+    def foldLeft(acc: A)(f: ((A, A)) => A): A = data match {
       case Nil => acc
       case head :: tail => MyList(tail).foldLeft(f(acc, head))(f)
     }
 
-    def filter(f: Int => Boolean) = flatMap {
-      ((value: Int) => if (f(value)) List(value) else List()) andThen MyList
+    def filter(f: A => Boolean): MyList[A, B] = flatMap {
+      ((value: A) => if (f(value)) Seq(value) else Seq()) andThen MyList[A, B]
     }
-
-    require(MyList(List(1, 2, 3, 4, 5, 6)).map(_ * 2).data == List(2, 4, 6, 8, 10, 12))
-    require(MyList(List(1, 2, 3, 4, 5, 6)).filter(_ % 2 == 0).data == List(2, 4, 6))
-    require(MyList(List(1, 2, 3, 4, 5, 6)).foldLeft(0)((tpl) => tpl._1 + tpl._2) == 21)
-    require(MyList(Nil).foldLeft(0)((tpl) => tpl._1 + tpl._2) == 0)
   }
+
+  object MyList {
+    def apply[A, B <: Seq[_]](data: Seq[A]): MyList[A, B] = new MyList[A, B](data)
+  }
+
+  case class MyIndexedList[A](override val data: IndexedSeq[A]) extends MyList[A, IndexedSeq[A]](data)
+
+  case class MyListBuffer[A](override val data: ListBuffer[A]) extends MyList[A, ListBuffer[A]](data)
+
+  require(MyList(List(1, 2, 3, 4, 5, 6)).map(_ * 2).data == List(2, 4, 6, 8, 10, 12))
+  require(MyList(List(1, 2, 3, 4, 5, 6)).filter(_ % 2 == 0).data == List(2, 4, 6))
+  require(MyList(List(1, 2, 3, 4, 5, 6)).foldLeft(0)((tpl) => tpl._1 + tpl._2) == 21)
+  require(MyList(Nil).foldLeft(0)((tpl) => tpl._1 + tpl._2) == 0)
+
+  require(MyList[Int, List[Int]](List(1, 2, 3, 4, 5, 6)).map(p => p * 2).data == List(2, 4, 6, 8, 10, 12))
+  require(MyList[Long, ListBuffer[Long]](ListBuffer(1, 2, 3, 4, 5, 6)).filter(_ % 2 == 0).data == List(2, 4, 6))
+  require(MyList[Int, List[Int]](List(1, 2, 3, 4, 5, 6)).foldLeft(0)((tpl) => tpl._1 + tpl._2) == 21)
+  require(MyList[Float, IndexedSeq[Float]](ArrayBuffer.empty[Float]).foldLeft(0)((tpl) => tpl._1 + tpl._2) == 0)
+
+  require(MyIndexedList[Float](ArrayBuffer.empty[Float]).foldLeft(0)((tpl) => tpl._1 + tpl._2) == 0)
+  require(MyListBuffer[Long](ListBuffer(1, 2, 3, 4, 5, 6)).filter(_ % 2 == 0).data == List(2, 4, 6))
 }
