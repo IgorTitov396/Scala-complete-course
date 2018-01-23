@@ -12,7 +12,7 @@ class FatUglyControllerTest extends FlatSpec with Matchers {
         |file1.txt
         |This is body of file1
       """.stripMargin
-    val (status, body) = controller.processRoute("/api/v1/uploadFile", Some(requestBody.getBytes))
+    val RouteResult(status, body) = controller.processRoute("/api/v1/uploadFile", Some(requestBody.getBytes))
 
     status shouldBe 200
     body shouldBe
@@ -30,7 +30,7 @@ class FatUglyControllerTest extends FlatSpec with Matchers {
         |file2.txt
         |This is body of file2!!
       """.stripMargin
-    val (status, body) = controller.processRoute("/api/v1/uploadFile", Some(requestBody.getBytes))
+    val RouteResult(status, body) = controller.processRoute("/api/v1/uploadFile", Some(requestBody.getBytes))
 
     status shouldBe 200
     body shouldBe
@@ -41,14 +41,14 @@ class FatUglyControllerTest extends FlatSpec with Matchers {
   }
 
   it should "return 404 for unknown route" in {
-    val (status, body) = controller.processRoute("/api", None)
+    val RouteResult(status, body) = controller.processRoute("/api", None)
 
     status shouldBe 404
     body shouldBe "Route not found"
   }
 
   it should "return 400 for empty body" in {
-    val (status, body) = controller.processRoute("/api/v1/uploadFile", None)
+    val RouteResult(status, body) = controller.processRoute("/api/v1/uploadFile", None)
 
     status shouldBe 400
     body shouldBe "Can not upload empty file"
@@ -62,6 +62,6 @@ class FatUglyControllerTest extends FlatSpec with Matchers {
 
   }
 
-  private val controller = new FatUglyController()
+  private val controller: FatUglyController = new FatUglyControllerImpl()
 
 }
