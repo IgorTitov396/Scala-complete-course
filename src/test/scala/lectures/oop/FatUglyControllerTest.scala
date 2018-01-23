@@ -54,12 +54,26 @@ class FatUglyControllerTest extends FlatSpec with Matchers {
     body shouldBe "Can not upload empty file"
   }
 
-  ignore should "return 400 for forbidden extension" in {
+  it should "return 400 for forbidden extension" in {
+    val requestBody =
+      """DELIMITER
+        |file1.exe
+        |This is body of file1
+      """.stripMargin
+    val RouteResult(status, body) = controller.processRoute("/api/v1/uploadFile", Some(requestBody.getBytes))
 
+    status shouldBe 400
+    body shouldBe "Request contains forbidden extension"
   }
 
-  ignore should "return 400 for file greater than 8 MB" in {
+  it should "return 400 for file greater than 8 MB" in {
+    val bigRequestLength: Int = 8388609
+    val bigRequestBody: Array[Byte] = Array.fill[Byte](bigRequestLength)(0)
 
+    val RouteResult(status, body) = controller.processRoute("/api/v1/uploadFile", Some(bigRequestBody))
+
+    status shouldBe 400
+    body shouldBe "File size should not be more than 8 MB"
   }
 
   private val controller: FatUglyController = new FatUglyControllerImpl()

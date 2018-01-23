@@ -50,32 +50,65 @@ class FatUglyControllerImpl extends FatUglyController {
           RouteResult(400, "File size should not be more than 8 MB")
 
         case Some(requestBytes) =>
-          val stringBody = requestBytes.map(_.toChar).mkString.replaceAll("\r", "")
-          val delimiter = stringBody.split("\n").head
-          val files = stringBody.split(delimiter).tail
+          val stringBody = getStringBody(requestBytes)
+          val delimiter = getDelimiter(stringBody)
+          val trimedFiles = trimFiles(stringBody, delimiter)
 
-          files.map(_.trim).foreach { trimedFile =>
-            val (trimedName, body) = trimedFile.splitAt(trimedFile.indexOf('\n'))
-            val trimmedBody = body.trim
-            val extension = trimedName.drop(trimedName.lastIndexOf('.') + 1)
-            val id = hash(trimedFile)
-
-            if (validExtentions.contains(extension)) {
-              RouteResult(400, "Request contains forbidden extension")
-            } else {
+          if (!isAllFilesValid(trimedFiles)) {
+            RouteResult(400, "Request contains forbidden extension")
+          } else {
+            trimedFiles.foreach { trimedFile =>
+              val (trimedName, body) = trimedFile.splitAt(trimedFile.indexOf('\n'))
+              val trimmedBody = body.trim
+              val extension = getExtention(trimedFile)
+              val id = hash(trimedFile)
+              
               // Emulate file saving to disk
               responseBuf.append(s"- saved file $trimedName to " + id + "." + extension + s" (file size: ${trimmedBody.length})\r\n")
 
               executePostgresQuery(databaseConnectionId, s"insert into files (id, name, created_on) values ('$id', '$trimedName', current_timestamp)")
               sendMessageToIbmMq(mqConnectionId, s"""<Event name="FileUpload"><Origin>SCALA_FTK_TASK</Origin><FileName>$trimedName</FileName></Event>""")
               send("admin@admin.tinkoff.ru", "File has been uploaded", s"Hey, we have got new file: $trimedName")
+
             }
+            RouteResult(200, "Response:\r\n" + responseBuf.dropRight(2))
           }
-          RouteResult(200, "Response:\r\n" + responseBuf.dropRight(2))
       }
     }
   }
-
+  
+  private def getStringBody(requestBytes: Array[Byte]): String = {
+    requestBytes.
+      map(_.toChar).
+      mkString.
+      replaceAll("\r", "")
+  }
+  
+  private def getDelimiter(stringBody: String): String = {
+    stringBody.
+      split("\n").
+      head
+  }
+  
+  private def trimFiles(stringBody: String, delimiter: String): Array[String] = {
+    stringBody.
+      split(delimiter).
+      tail.
+      map(_.trim)
+  }
+  
+  private def getExtention(trimedFile: String): String = {
+    val trimedName = trimedFile.splitAt(trimedFile.indexOf('\n'))._1
+    trimedName.drop(trimedName.lastIndexOf('.') + 1)
+  }
+  
+  private def isAllFilesValid(trimedFiles: Array[String]): Boolean = {
+    trimedFiles.forall { trimedFile =>
+      val extention = getExtention(trimedFile)
+      !notValidExtensions.contains(extention)
+    }
+  }
+  
   private def connectToPostgresDatabase(): Int = {
     // DO NOT TOUCH
     println("Connected to PostgerSQL database")
@@ -114,10 +147,10 @@ class FatUglyControllerImpl extends FatUglyController {
     MessageDigest.getInstance("SHA-1").digest(s.getBytes("UTF-8")).map("%02x".format(_)).mkString
   }
 
-
   private val correctRoute: String = "/api/v1/uploadFile"
   private val maxRequestLength: Int = 8388608
-  private val validExtentions = Seq("exe", "bat", "com", "sh")
+  private val notValidExtensions = Seq("exe", "bat", "com", "sh")
+
 }
 
 case class RouteResult(code: Int, message: String)
