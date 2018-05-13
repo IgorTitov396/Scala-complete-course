@@ -22,80 +22,239 @@ import java.security.MessageDigest
   *
   * Удачи!
   */
-class FatUglyController {
 
-  def processRoute(route: String, requestBody: Option[Array[Byte]]): (Int, String) = {
-    val responseBuf = new StringBuilder()
-    val databaseConnectionId = connectToPostgresDatabase()
-    val mqConnectionId = connectToIbmMq()
-    initializeLocalMailer()
-    if (route == "/api/v1/uploadFile") {
-      if (requestBody.isEmpty) {
-        return (400, "Can not upload empty file")
-      } else if (requestBody.get.length > 8388608) {
-        return (400, "File size should not be more than 8 MB")
-      } else {
-        val stringBody = new String(requestBody.get.filter(_ != '\r'))
-        val delimiter = stringBody.takeWhile(_ != '\n')
-        val files = stringBody.split(delimiter).drop(1)
-        files.foreach { file =>
-          val (name, body) = file.trim.splitAt(file.trim.indexOf('\n'))
-          val trimmedBody = body.trim
-          val extension = name.reverse.takeWhile(_ != '.').reverse
-          val id = hash(file.trim)
-          if (Seq("exe", "bat", "com", "sh").contains(extension)) {
-            return (400, "Request contains forbidden extension")
-          }
-          // Emulate file saving to disk
-          responseBuf.append(s"- saved file $name to " + id + "." + extension + s" (file size: ${trimmedBody.length})\n")
+//components
 
-          executePostgresQuery(databaseConnectionId, s"insert into files (id, name, created_on) values ('$id', '$name', current_timestamp)")
-          sendMessageToIbmMq(mqConnectionId, s"""<Event name="FileUpload"><Origin>SCALA_FTK_TASK</Origin><FileName>${name}</FileName></Event>""")
-          send("admin@admin.tinkoff.ru", "File has been uploaded", s"Hey, we have got new file: $name")
-        }
+trait FatUglyControllerComponent {
+  def fatUglyController: FatUglyController
+}
 
-        return (200, "Response:\n" + responseBuf.dropRight(1))
-      }
-    } else {
-      return (404, "Route not found")
-    }
-  }
+trait MqControllerComponent {
+  def mqController: MqController
+}
 
-  def connectToPostgresDatabase(): Int = {
+trait DbControllerComponent {
+  def dbController: DbController
+}
+
+trait MailerComponent {
+  def mailer: Mailer
+}
+
+trait RequestValidationServiceComponent {
+  def requestValidationService: RequestValidationService
+}
+
+//services
+
+trait FatUglyController {
+  def processRoute(route: String, requestBody: Option[Array[Byte]]): RouteResult
+}
+
+trait DbController {
+  def connectAndGetId: Int
+  def execute(connectionId: Int, query: String): String
+}
+
+trait MqController {
+  def connectAndGetId: Int
+  def sendMessage(connectionId: Int, message: String): String
+}
+
+trait Mailer {
+  def init(): Unit
+
+  def sendToEmail(email: String, subject: String, body: String): Unit
+}
+
+trait RequestValidationService {
+  def extractRequestBody(request: Request): Either[Array[Byte], RouteResult]
+}
+
+//implementations
+
+class PostgresDbControllerImpl extends DbController {
+
+  override def connectAndGetId: Int = connectToPostgresDatabase()
+
+  override def execute(connectionId: Int, query: String): String =
+    executePostgresQuery(connectionId, query)
+
+
+  private def connectToPostgresDatabase(): Int = {
     // DO NOT TOUCH
     println("Connected to PostgerSQL database")
     42 // pretty unique connection id
   }
 
-  def executePostgresQuery(connectionId: Int, sql: String): String = {
+  private def executePostgresQuery(connectionId: Int, sql: String): String = {
     // DO NOT TOUCH
     println(s"Executed SQL statement on connection $connectionId: $sql")
     s"Result of $sql"
   }
 
-  def connectToIbmMq(): Int = {
+}
+
+class IbmMqControllerImpl extends MqController {
+
+  override def connectAndGetId: Int = connectToIbmMq()
+
+  override def sendMessage(connectionId: Int, message: String): String =
+    sendMessageToIbmMq(connectionId, message)
+
+  private def connectToIbmMq(): Int = {
     // DO NOT TOUCH
     println("Connected to IBM WebSphere super-duper MQ Manager")
     13 // chosen by fair dice roll
   }
 
-  def sendMessageToIbmMq(connectionId: Int, message: String): String = {
+  private def sendMessageToIbmMq(connectionId: Int, message: String): String = {
     // DO NOT TOUCH
     println(s"Sent MQ message via $connectionId: $message")
     s"Message sending result for $message"
   }
 
-  def initializeLocalMailer(): Unit = {
+}
+
+class LocalMailerImpl extends Mailer {
+
+  override def init(): Unit = initializeLocalMailer()
+
+  override def sendToEmail(email: String, subject: String, body: String): Unit =
+    send(email: String, subject: String, body: String)
+
+  private def initializeLocalMailer(): Unit = {
     // DO NOT TOUCH
     println("Initialized local mailer")
   }
 
-  def send(email: String, subject: String, body: String): Unit = {
+  private def send(email: String, subject: String, body: String): Unit = {
     // DO NOT TOUCH
     println(s"Sent email to $email with subject '$subject'")
   }
 
-  def hash(s: String): String = {
-    MessageDigest.getInstance("SHA-1").digest(s.getBytes("UTF-8")).map("%02x".format(_)).mkString
+}
+
+class RequestValidationServiceImpl extends RequestValidationService {
+  override def extractRequestBody(request: Request): Either[Array[Byte], RouteResult] = {
+    if (!isRouteCorrect(request.route)) Right(RouteResult(404, "Route not found"))
+    else {
+      request.requestBodyOpt match {
+        case None =>
+          Right(RouteResult(400, "Can not upload empty file"))
+
+        case Some(requestBytes) if requestBytes.length > maxRequestLength =>
+          Right(RouteResult(400, "File size should not be more than 8 MB"))
+
+        case Some(requestBody) => Left(requestBody)
+      }
+    }
+  }
+
+  private def isRouteCorrect(route: String) = route.equals(correctRoute)
+
+  private val maxRequestLength: Int = 8388608
+
+  private val correctRoute: String = "/api/v1/uploadFile"
+
+  case class ValidRequest()
+}
+
+object RequestParserUtil {
+
+  def getTrimedFilesFromRequestBody(requestBody: Array[Byte]): Array[String] = {
+    val stringBody = getStringBody(requestBody)
+    val delimiter = getDelimiter(stringBody)
+    trimFiles(stringBody, delimiter)
+  }
+
+  private def getStringBody(requestBytes: Array[Byte]): String = {
+    requestBytes.
+      map(_.toChar)
+      .mkString
+      .replaceAll("\r", "")
+  }
+
+  private def getDelimiter(stringBody: String): String = {
+    stringBody
+      .split("\n")
+      .head
+  }
+
+  private def trimFiles(stringBody: String, delimiter: String): Array[String] = {
+    stringBody.
+      split(delimiter).
+      tail.
+      map(_.trim)
   }
 }
+
+
+class FatUglyControllerImpl extends FatUglyController {
+  this: DbControllerComponent
+    with MqControllerComponent
+    with MailerComponent
+    with RequestValidationServiceComponent =>
+
+  override def processRoute(route: String, requestBodyOpt: Option[Array[Byte]]): RouteResult = {
+    requestValidationService.extractRequestBody(Request(route, requestBodyOpt)) match {
+      case Right(routeResult) => routeResult
+      case Left(requestBody) =>
+        val trimedFiles = RequestParserUtil.getTrimedFilesFromRequestBody(requestBody)
+        storeAndSpreadFiles(trimedFiles)
+    }
+  }
+
+  private def storeAndSpreadFiles(files: Seq[String]): RouteResult = {
+    val databaseConnectionId = dbController.connectAndGetId
+    val mqConnectionId = mqController.connectAndGetId
+    mailer.init()
+
+    if (!isAllFilesValid(files)) {
+      RouteResult(400, "Request contains forbidden extension")
+    } else {
+      val responseBuf = new StringBuilder()
+
+      files.foreach { trimedFile =>
+        val (trimedName, body) = trimedFile.splitAt(trimedFile.indexOf('\n'))
+        val fileSize = body.trim.length
+        val extension = getExtention(trimedFile)
+        val id = hash(trimedFile)
+
+        // Emulate file saving to disk
+        responseBuf.append(s"- saved file $trimedName to " + id + "." + extension + s" (file size: $fileSize)\r\n")
+
+        dbController.execute(databaseConnectionId, s"insert into files (id, name, created_on) values ('$id', '$trimedName', current_timestamp)")
+        mqController.sendMessage(mqConnectionId, s"""<Event name="FileUpload"><Origin>SCALA_FTK_TASK</Origin><FileName>$trimedName</FileName></Event>""")
+        mailer.sendToEmail("admin@admin.tinkoff.ru", "File has been uploaded", s"Hey, we have got new file: $trimedName")
+
+      }
+      RouteResult(200, "Response:\r\n" + responseBuf.dropRight(2))
+    }
+  }
+
+
+
+  private def getExtention(trimedFile: String): String = {
+    val trimedName = trimedFile.splitAt(trimedFile.indexOf('\n'))._1
+    trimedName.drop(trimedName.lastIndexOf('.') + 1)
+  }
+
+  private def isAllFilesValid(files: Seq[String]): Boolean = {
+    files.forall { trimedFile =>
+      val extention = getExtention(trimedFile)
+      !notValidExtensions.contains(extention)
+    }
+  }
+
+  private def hash(s: String): String = {
+    MessageDigest.getInstance("SHA-1").digest(s.getBytes("UTF-8")).map("%02x".format(_)).mkString
+  }
+
+  private val notValidExtensions = Seq("exe", "bat", "com", "sh")
+
+}
+
+case class RouteResult(code: Int, message: String)
+
+case class Request(route: String, requestBodyOpt: Option[Array[Byte]])

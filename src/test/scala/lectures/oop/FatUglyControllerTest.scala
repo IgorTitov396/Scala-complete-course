@@ -76,6 +76,19 @@ class FatUglyControllerTest extends FlatSpec with Matchers {
     body shouldBe "File size should not be more than 8 MB"
   }
 
-  private val controller: FatUglyController = new FatUglyControllerImpl()
+  private val controller: FatUglyController =
+    new FatUglyControllerImpl
+      with DbControllerComponent
+      with MqControllerComponent
+      with MailerComponent
+      with RequestValidationServiceComponent {
 
+      override def dbController = new PostgresDbControllerImpl
+
+      override def mqController = new IbmMqControllerImpl
+
+      override def mailer = new LocalMailerImpl
+
+      override def requestValidationService = new RequestValidationServiceImpl
+    }
 }
