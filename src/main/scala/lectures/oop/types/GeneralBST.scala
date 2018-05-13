@@ -30,18 +30,23 @@ trait GeneralBST[T] {
 
 
 case class GeneralBSTImpl[T](value: T,
-                         left: Option[GeneralBSTImpl[T]] = None,
-                         right: Option[GeneralBSTImpl[T]] = None)(implicit ord: Ordering[T]) extends GeneralBST[T] {
+                             left: Option[GeneralBSTImpl[T]] = None,
+                             right: Option[GeneralBSTImpl[T]] = None)(implicit ord: Ordering[T]) extends GeneralBST[T] {
 
-  override def add(newValue: T): GeneralBST[T] = {
-    if (ord.lt(newValue, this.value)) {
+  override def add(newValue: T): GeneralBST[T] = addGeneralBSTImpl(newValue)
+
+  private def addGeneralBSTImpl(newValue: T): GeneralBSTImpl[T] = {
+    import Ordered._
+
+    val a: Int = 1
+    if (newValue < value) {
       left.fold(
         this.copy(
           left = Some(GeneralBSTImpl(newValue))
         )
       )( bst_left =>
         this.copy(
-          left = Some(bst_left.add(newValue).asInstanceOf[GeneralBSTImpl[T]])
+          left = Some(bst_left.addGeneralBSTImpl(newValue))
         )
       )
     }
@@ -52,7 +57,7 @@ case class GeneralBSTImpl[T](value: T,
         )
       )( bst_right =>
         this.copy(
-          right = Some(bst_right.add(newValue).asInstanceOf[GeneralBSTImpl[T]])
+          right = Some(bst_right.addGeneralBSTImpl(newValue))
         )
       )
     }
