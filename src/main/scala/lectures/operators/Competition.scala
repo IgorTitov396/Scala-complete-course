@@ -16,17 +16,20 @@ import scala.util.Try
   * Если результат встречи >0, то finalResult увеличивается на единицу
   * Если <0, уменьшается
   *
-  * В итоге надо напечатать:
-  * "Наша взяла", если наших побед больше, т.е. finalResult > 0
-  * "Продули", если победили приезжие
-  * "Победила дружба" в случае ничьи
+  * В итоге надо
+  * исправить ошибки компиляции
+  * напечатать:
+  * * "Наша взяла", если наших побед больше, т.е. finalResult > 0
+  * * "Продули", если победили приезжие
+  * * "Победила дружба" в случае ничьи
   *
   * Для решения задачи раскомментируйте тело объекта Competition
+  * В целях упрощения можно поменять тип исходных данных
   */
 
 object Competition {
 
-  val locals = Map("Artem" -> 6, "Sergey" -> 5, "Anton" -> 2, "Vladimir" -> "2", "Alexander" -> 4l)
+  val locals = Map("Artem" -> 6, "Sergey" -> 5, "Anton" -> 2, "Vladimir" -> "2", "Alexander" -> 4D)
   val foreigners = Map[String, Int]("John" -> 3, "James" -> 1, "Tom" -> 2, "Dick" -> 5, "Eric" -> 6)
 
   val results = for (l <- locals.toArray.map(pair => (pair._1, toInt(pair._2))); f <- foreigners) yield l._1 + " vs " + f._1 -> (l._2 - f._2)
