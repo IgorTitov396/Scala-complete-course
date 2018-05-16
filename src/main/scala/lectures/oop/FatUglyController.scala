@@ -29,12 +29,12 @@ trait FatUglyControllerComponent {
   def fatUglyController: FatUglyController
 }
 
-trait MqControllerComponent {
-  def mqController: MqController
+trait MqServiceComponent {
+  def mqService: MqService
 }
 
-trait DbControllerComponent {
-  def dbController: DbController
+trait DbServiceComponent {
+  def dbService: DbService
 }
 
 trait MailerComponent {
@@ -51,12 +51,12 @@ trait FatUglyController {
   def processRoute(route: String, requestBody: Option[Array[Byte]]): RouteResult
 }
 
-trait DbController {
+trait DbService {
   def connectAndGetId: Int
   def execute(connectionId: Int, query: String): String
 }
 
-trait MqController {
+trait MqService {
   def connectAndGetId: Int
   def sendMessage(connectionId: Int, message: String): String
 }
@@ -68,12 +68,12 @@ trait Mailer {
 }
 
 trait RequestValidationService {
-  def extractRequestBody(request: Request): Either[Array[Byte], RouteResult]
+  def extractRequestBody(request: Request): Either[RouteResult, Array[Byte]]
 }
 
 //implementations
 
-class PostgresDbControllerImpl extends DbController {
+class PostgresDbServiceImpl extends DbService {
 
   override def connectAndGetId: Int = connectToPostgresDatabase()
 
@@ -95,7 +95,7 @@ class PostgresDbControllerImpl extends DbController {
 
 }
 
-class IbmMqControllerImpl extends MqController {
+class IbmMqServiceImpl extends MqService {
 
   override def connectAndGetId: Int = connectToIbmMq()
 
@@ -136,17 +136,17 @@ class LocalMailerImpl extends Mailer {
 }
 
 class RequestValidationServiceImpl extends RequestValidationService {
-  override def extractRequestBody(request: Request): Either[Array[Byte], RouteResult] = {
-    if (!isRouteCorrect(request.route)) Right(RouteResult(404, "Route not found"))
+  override def extractRequestBody(request: Request): Either[RouteResult, Array[Byte]] = {
+    if (!isRouteCorrect(request.route)) Left(RouteResult(404, "Route not found"))
     else {
       request.requestBodyOpt match {
         case None =>
-          Right(RouteResult(400, "Can not upload empty file"))
+          Left(RouteResult(400, "Can not upload empty file"))
 
         case Some(requestBytes) if requestBytes.length > maxRequestLength =>
-          Right(RouteResult(400, "File size should not be more than 8 MB"))
+          Left(RouteResult(400, "File size should not be more than 8 MB"))
 
-        case Some(requestBody) => Left(requestBody)
+        case Some(requestBody) => Right(requestBody)
       }
     }
   }
@@ -182,32 +182,32 @@ object RequestParserUtil {
   }
 
   private def trimFiles(stringBody: String, delimiter: String): Array[String] = {
-    stringBody.
-      split(delimiter).
-      tail.
-      map(_.trim)
+    stringBody
+      .split(delimiter)
+      .tail
+      .map(_.trim)
   }
 }
 
 
 class FatUglyControllerImpl extends FatUglyController {
-  this: DbControllerComponent
-    with MqControllerComponent
+  this: DbServiceComponent
+    with MqServiceComponent
     with MailerComponent
     with RequestValidationServiceComponent =>
 
   override def processRoute(route: String, requestBodyOpt: Option[Array[Byte]]): RouteResult = {
     requestValidationService.extractRequestBody(Request(route, requestBodyOpt)) match {
-      case Right(routeResult) => routeResult
-      case Left(requestBody) =>
+      case Left(routeResult) => routeResult
+      case Right(requestBody) =>
         val trimedFiles = RequestParserUtil.getTrimedFilesFromRequestBody(requestBody)
         storeAndSpreadFiles(trimedFiles)
     }
   }
 
   private def storeAndSpreadFiles(files: Seq[String]): RouteResult = {
-    val databaseConnectionId = dbController.connectAndGetId
-    val mqConnectionId = mqController.connectAndGetId
+    val databaseConnectionId = dbService.connectAndGetId
+    val mqConnectionId = mqService.connectAndGetId
     mailer.init()
 
     if (!isAllFilesValid(files)) {
@@ -224,8 +224,8 @@ class FatUglyControllerImpl extends FatUglyController {
         // Emulate file saving to disk
         responseBuf.append(s"- saved file $trimedName to " + id + "." + extension + s" (file size: $fileSize)\r\n")
 
-        dbController.execute(databaseConnectionId, s"insert into files (id, name, created_on) values ('$id', '$trimedName', current_timestamp)")
-        mqController.sendMessage(mqConnectionId, s"""<Event name="FileUpload"><Origin>SCALA_FTK_TASK</Origin><FileName>$trimedName</FileName></Event>""")
+        dbService.execute(databaseConnectionId, s"insert into files (id, name, created_on) values ('$id', '$trimedName', current_timestamp)")
+        mqService.sendMessage(mqConnectionId, s"""<Event name="FileUpload"><Origin>SCALA_FTK_TASK</Origin><FileName>$trimedName</FileName></Event>""")
         mailer.sendToEmail("admin@admin.tinkoff.ru", "File has been uploaded", s"Hey, we have got new file: $trimedName")
 
       }
